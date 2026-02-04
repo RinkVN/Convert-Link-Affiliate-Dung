@@ -99,18 +99,33 @@ async function performConvert(originalUrl, subId, req) {
     }
   }
 
+  // Luôn ưu tiên hiển thị thông tin sản phẩm nếu CSV có dữ liệu,
+  // phần hoa hồng (commission) sẽ được bổ sung nếu lấy được tỷ lệ.
+  const baseProductInfo =
+    productDetail && (productDetail.name || productDetail.price != null || productDetail.image)
+      ? {
+        productName: productDetail.name || undefined,
+        price: typeof productDetail.price === 'number' ? productDetail.price : undefined,
+        discount: typeof productDetail.discount === 'number' ? productDetail.discount : undefined,
+        image: productDetail.image || undefined
+      }
+      : null;
+
+  let estimatedCommission = null;
   if (salePrice != null && typeof commissionRate === 'number' && commissionRate >= 0) {
-    const estimatedCommission = Math.round((salePrice * commissionRate) / 100);
+    estimatedCommission = Math.round((salePrice * commissionRate) / 100);
+  }
+
+  if (baseProductInfo || (typeof commissionRate === 'number' && commissionRate >= 0)) {
     productInfo = {
-      productName: productDetail?.name,
-      price: productDetail?.price,
-      discount: productDetail?.discount,
-      image: productDetail?.image,
-      commissionRate,
-      estimatedCommission
+      ...(baseProductInfo || {}),
+      ...(typeof commissionRate === 'number' && commissionRate >= 0
+        ? {
+          commissionRate,
+          estimatedCommission: estimatedCommission ?? undefined
+        }
+        : {})
     };
-  } else if (typeof commissionRate === 'number' && commissionRate >= 0) {
-    productInfo = { commissionRate };
   }
 
   return {
