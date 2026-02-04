@@ -32,22 +32,21 @@ export function ConvertForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl text-stone-900">
           <Link2 className="h-5 w-5 text-orange-500" />
-          Dán link sản phẩm Shopee
+          Dán link sản phẩm
         </CardTitle>
         <CardDescription className="text-stone-600">
-          Dán link Shopee (shopee.vn, vn.shp.ee, s.shopee.vn) để tạo link
-          affiliate
+          Dán link Shopee (shopee.vn, vn.shp.ee, s.shopee.vn), TikTok Shop hoặc
+          Lazada để tạo link affiliate
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            
             <Input
               id="originalUrl"
               type="url"
               required
-              placeholder="https://shopee.vn/..."
+              placeholder="https://shopee.vn/..., https://vt.tiktok.com/... hoặc https://www.lazada.vn/..."
               value={originalUrl}
               onChange={(e) => onOriginalUrlChange(e.target.value)}
               className="border-stone-200 bg-white text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-500"

@@ -63,6 +63,21 @@
   }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-12px) translateX(8px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-6px) translateX(-6px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-15px) translateX(4px) rotate(1deg);
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

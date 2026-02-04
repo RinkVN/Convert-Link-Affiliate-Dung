@@ -9,6 +9,8 @@ import rateLimit from 'express-rate-limit';
 import { connectDb } from './config/db.js';
 import { loadShopeeDatafeed } from './services/shopeeDatafeed.js';
 import convertRouter, { renderLinkHandler } from './routes/convert.js';
+import tiktokshopRouter from './routes/tiktokshop.js';
+import lazadaRouter from './routes/lazada.js';
 import topProductsRouter from './routes/topProducts.js';
 import eventsRouter from './routes/events.js';
 import adminRouter from './routes/admin.js';
@@ -42,7 +44,7 @@ app.options("*", cors(corsOptions));
 // Body parser
 app.use(express.json());
 
-// Rate limiting for /api/convert
+// Rate limiting cho các endpoint convert
 const convertLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 30, // 30 requests per window per IP
@@ -53,6 +55,8 @@ const convertLimiter = rateLimit({
 });
 
 app.use('/api/convert', convertLimiter, convertRouter);
+app.use('/api/tiktokshop', convertLimiter, tiktokshopRouter);
+app.use('/api/lazada', convertLimiter, lazadaRouter);
 app.get('/render-link', convertLimiter, renderLinkHandler);
 app.use('/api/top-products', topProductsRouter);
 app.use('/api/events', eventsRouter);
@@ -74,7 +78,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4001;
 
 async function start() {
   try {

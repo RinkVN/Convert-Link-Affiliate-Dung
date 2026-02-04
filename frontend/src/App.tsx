@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { api } from "@/lib/api";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroSection } from "@/components/HeroSection";
+import { FloatingLogos } from "@/components/FloatingLogos";
 import { ConvertForm } from "@/components/ConvertForm";
 import { ResultCard } from "@/components/ResultCard";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
@@ -48,6 +49,47 @@ const App: React.FC = () => {
 
   useSessionTracking();
 
+  const isShopeeUrl = (urlString: string) => {
+    try {
+      const url = new URL(urlString);
+      const host = url.hostname.toLowerCase();
+      return (
+        host === "shopee.vn" ||
+        host.endsWith(".shopee.vn") ||
+        host === "vn.shp.ee" ||
+        host === "s.shopee.vn"
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const isLazadaUrl = (urlString: string) => {
+    try {
+      const url = new URL(urlString);
+      const host = url.hostname.toLowerCase();
+      return host === "lazada.vn" || host.endsWith(".lazada.vn");
+    } catch {
+      return false;
+    }
+  };
+
+  const isTiktokUrl = (urlString: string) => {
+    try {
+      const url = new URL(urlString);
+      const host = url.hostname.toLowerCase();
+      return (
+        host === "vt.tiktok.com" ||
+        host === "tiktok.com" ||
+        host === "www.tiktok.com" ||
+        host === "shop.tiktok.com" ||
+        host.endsWith(".tiktok.com")
+      );
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     setSubId(loadLocalSubId());
 
@@ -89,12 +131,10 @@ const App: React.FC = () => {
     try {
       if (subId) saveLocalSubId(subId);
 
-      const payload: { originalUrl: string; subId?: string } = {
-        originalUrl: originalUrl.trim(),
-      };
-      if (subId.trim()) payload.subId = subId.trim();
+      const trimmedUrl = originalUrl.trim();
+      const trimmedSub = subId.trim();
 
-      const resp = await api.post<{
+      type ConvertResponse = {
         id: string;
         affiliateUrl: string;
         clickTrackingUrl?: string;
@@ -106,7 +146,46 @@ const App: React.FC = () => {
           productName?: string;
           image?: string;
         };
-      }>("/api/convert", payload);
+      };
+
+      let resp;
+
+      if (isShopeeUrl(trimmedUrl)) {
+        const payload: { originalUrl: string; subId?: string } = {
+          originalUrl: trimmedUrl,
+        };
+        if (trimmedSub) payload.subId = trimmedSub;
+
+        resp = await api.post<ConvertResponse>("/api/convert", payload);
+      } else if (isTiktokUrl(trimmedUrl)) {
+        const payload: {
+          product_url: string;
+          sub1?: string;
+        } = {
+          product_url: trimmedUrl,
+        };
+        if (trimmedSub) payload.sub1 = trimmedSub;
+
+        resp = await api.post<ConvertResponse>(
+          "/api/tiktokshop/create-link",
+          payload
+        );
+      } else if (isLazadaUrl(trimmedUrl)) {
+        const payload: { originalUrl: string; subId?: string } = {
+          originalUrl: trimmedUrl,
+        };
+        if (trimmedSub) payload.subId = trimmedSub;
+
+        resp = await api.post<ConvertResponse>(
+          "/api/lazada/convert",
+          payload
+        );
+      } else {
+        setError(
+          "URL phải là link Shopee, TikTok / TikTok Shop hoặc Lazada hợp lệ."
+        );
+        return;
+      }
 
       setAffiliateUrl(resp.data.affiliateUrl);
       setClickTrackingUrl(resp.data.clickTrackingUrl);
@@ -114,9 +193,9 @@ const App: React.FC = () => {
 
       const newItem: HistoryItem = {
         id: resp.data.id,
-        originalUrl: originalUrl.trim(),
+        originalUrl: trimmedUrl,
         affiliateUrl: resp.data.affiliateUrl,
-        subId: subId.trim(),
+        subId: trimmedSub,
         createdAt: new Date().toISOString(),
       };
 
@@ -166,7 +245,10 @@ const App: React.FC = () => {
 
       <AppHeader subId={subId} onSubIdChange={setSubId} />
 
-      <HeroSection />
+      <div className="relative">
+        <FloatingLogos />
+        <HeroSection />
+      </div>
 
       <main className="relative z-10 mx-auto max-w-6xl px-4 pb-24">
         {/* Công cụ tạo link - tính năng chính */}

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://muasamhoantien.shopbnh.vn/sitemap.xml
+Sitemap: https://hoantien.shopbnh.vn/sitemap.xml

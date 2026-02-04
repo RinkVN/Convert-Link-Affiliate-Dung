@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://muasamhoantien.shopbnh.vn/</loc>
+    <loc>https://hoantien.shopbnh.vn/</loc>
     <lastmod>2026-02-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- Nếu bạn có các trang khác thì thêm vào -->
-  <!--
-  <url>
-    <loc>https://hoantien.shopbnh.vn/lien-he</loc>
+    <loc>https://hoantien.shopbnh.vn/admin203816</loc>
+    <lastmod>2026-02-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  -->
+  <url>
+    <loc>https://hoantien.shopbnh.vn/privacy</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://hoantien.shopbnh.vn/contact</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://hoantien.shopbnh.vn/terms</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
 </urlset>

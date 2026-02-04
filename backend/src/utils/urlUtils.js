@@ -1,4 +1,5 @@
 const SHOPEE_DOMAINS = ['shopee.vn', 'vn.shp.ee', 's.shopee.vn'];
+const LAZADA_DOMAINS = ['lazada.vn'];
 
 const TRACKING_PARAMS = [
   'utm_source',
@@ -20,6 +21,18 @@ export function isShopeeUrl(urlString) {
   try {
     const url = new URL(urlString);
     return SHOPEE_DOMAINS.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`));
+  } catch {
+    return false;
+  }
+}
+
+export function isLazadaUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    const host = url.hostname.toLowerCase();
+    return LAZADA_DOMAINS.some(
+      (domain) => host === domain || host === `www.${domain}` || host.endsWith(`.${domain}`)
+    );
   } catch {
     return false;
   }

@@ -2,10 +2,14 @@ import axios from 'axios';
 
 const DEFAULT_BASE_URL = 'https://api.accesstrade.vn';
 
-export async function createTrackingLink({ originalUrl, normalizedUrl, subId }) {
+/**
+ * Tạo tracking link qua ACCESSTRADE cho 1 campaign cụ thể.
+ * Mặc định dùng campaign Shopee, có thể override bằng campaignId.
+ */
+export async function createTrackingLink({ originalUrl, normalizedUrl, subId, campaignId: campaignIdOverride }) {
   const apiToken = process.env.ACCESSTRADE_API_TOKEN?.trim();
   const baseUrl = process.env.ACCESSTRADE_BASE_URL || DEFAULT_BASE_URL;
-  const campaignId = process.env.ACCESSTRADE_SHOPEE_CAMPAIGN_ID?.trim();
+  const campaignId = campaignIdOverride || process.env.ACCESSTRADE_SHOPEE_CAMPAIGN_ID?.trim();
 
   if (!apiToken) {
     const err = new Error('ACCESSTRADE_API_TOKEN is not configured on the server');
@@ -14,7 +18,7 @@ export async function createTrackingLink({ originalUrl, normalizedUrl, subId }) 
   }
 
   if (!campaignId) {
-    const err = new Error('ACCESSTRADE_SHOPEE_CAMPAIGN_ID is not configured on the server');
+    const err = new Error('ACCESSTRADE campaign_id is not configured on the server');
     err.status = 500;
     throw err;
   }
@@ -111,6 +115,148 @@ export async function createTrackingLink({ originalUrl, normalizedUrl, subId }) 
 
     if (error.code === 'ECONNABORTED') {
       const err = new Error('ACCESSTRADE API request timed out');
+      err.status = 504;
+      throw err;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Tạo link affiliate cho TikTok Shop thông qua API v2.
+ * POST /v2/tiktokshop_product_feeds/create_link
+ */
+export async function createTiktokshopLink(body) {
+  const apiToken = process.env.ACCESSTRADE_API_TOKEN?.trim();
+  const baseUrl = process.env.ACCESSTRADE_BASE_URL || DEFAULT_BASE_URL;
+
+  if (!apiToken) {
+    const err = new Error('ACCESSTRADE_API_TOKEN is not configured on the server');
+    err.status = 500;
+    throw err;
+  }
+
+  if (!body || typeof body.product_url !== 'string' || !body.product_url.trim()) {
+    const err = new Error('product_url is required');
+    err.status = 400;
+    throw err;
+  }
+
+  const url = `${baseUrl}/v2/tiktokshop_product_feeds/create_link`;
+
+  // Chuẩn hóa payload: chỉ gửi lên các field được hỗ trợ
+  const payload = {
+    product_url: body.product_url.trim()
+  };
+
+  if (body.product_id) payload.product_id = String(body.product_id).trim();
+
+  // UTM params
+  if (body.utm_source) payload.utm_source = String(body.utm_source).trim();
+  if (body.utm_medium) payload.utm_medium = String(body.utm_medium).trim();
+  if (body.utm_campaign) payload.utm_campaign = String(body.utm_campaign).trim();
+  if (body.utm_content) payload.utm_content = String(body.utm_content).trim();
+
+  // Sub params: chấp nhận cả sub1/sub_1...
+  const sub1 = body.sub1 || body.sub_1;
+  const sub2 = body.sub2 || body.sub_2;
+  const sub3 = body.sub3 || body.sub_3;
+  const sub4 = body.sub4 || body.sub_4;
+  if (sub1) payload.sub1 = String(sub1).trim();
+  if (sub2) payload.sub2 = String(sub2).trim();
+  if (sub3) payload.sub3 = String(sub3).trim();
+  if (sub4) payload.sub4 = String(sub4).trim();
+
+  console.log('[ACCESSTRADE][TikTokShop] Request:', {
+    url,
+    hasProductId: !!payload.product_id,
+    hasUtm: !!(payload.utm_source || payload.utm_medium || payload.utm_campaign || payload.utm_content),
+    hasSub: !!(payload.sub1 || payload.sub2 || payload.sub3 || payload.sub4),
+    tokenLength: apiToken?.length || 0
+  });
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${apiToken}`
+      },
+      timeout: 10000
+    });
+
+    const data = response.data;
+
+    if (!data || data.status !== true) {
+      const message = data?.message || 'ACCESSTRADE TikTokShop API returned an unsuccessful response';
+      const err = new Error(message);
+      // Nếu API trả về status=false thì xem là lỗi phía client (link không thuộc campaign, v.v.)
+      err.status = 400;
+      err.code = 'ACCESSTRADE_TIKTOKSHOP_ERROR';
+      err.rawResponse = data;
+      throw err;
+    }
+
+    const affUrl = data.data?.aff_url || '';
+    const shortUrl = data.data?.aff_short_url || '';
+
+    if (!affUrl) {
+      const err = new Error('ACCESSTRADE TikTokShop API did not return an affiliate URL');
+      err.status = 502;
+      throw err;
+    }
+
+    return {
+      affiliateUrl: affUrl,
+      shortLink: shortUrl || null,
+      productCommission: data.data?.product_commission || null,
+      productInfo: {
+        id: data.data?.product_id || null,
+        name: data.data?.product_name || null,
+        image: data.data?.product_image || null,
+        price: data.data?.product_price || null
+      },
+      rawResponse: data
+    };
+  } catch (error) {
+    if (error.response) {
+      const status = error.response.status;
+      const responseData = error.response.data;
+
+      let message = 'ACCESSTRADE TikTokShop API error';
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          message = responseData;
+        } else if (responseData.message) {
+          message = responseData.message;
+        } else if (responseData.error) {
+          message = responseData.error;
+        }
+      }
+
+      if (status === 403) {
+        const err = new Error(
+          `ACCESSTRADE TikTokShop API authentication failed (403). Please check your token and permissions. Error: ${message}`
+        );
+        err.status = 403;
+        throw err;
+      }
+
+      if (status === 401) {
+        const err = new Error(
+          `ACCESSTRADE TikTokShop API unauthorized (401). Please check your API token. Error: ${message}`
+        );
+        err.status = 401;
+        throw err;
+      }
+
+      const err = new Error(`ACCESSTRADE TikTokShop API error (${status}): ${message}`);
+      err.status = status >= 500 ? 502 : status;
+      throw err;
+    }
+
+    if (error.code === 'ECONNABORTED') {
+      const err = new Error('ACCESSTRADE TikTokShop API request timed out');
       err.status = 504;
       throw err;
     }
