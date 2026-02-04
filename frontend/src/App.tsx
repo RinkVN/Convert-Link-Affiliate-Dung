@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
-import { DotPattern } from "@/components/aceternity/DotPattern";
-import { GridPattern } from "@/components/aceternity/GridPattern";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroSection } from "@/components/HeroSection";
 import { ConvertForm } from "@/components/ConvertForm";
@@ -20,6 +18,7 @@ import {
   saveLocalHistory,
 } from "@/lib/storage";
 import { useSessionTracking } from "@/hooks/useSessionTracking";
+import { Helmet } from "react-helmet-async";
 
 const App: React.FC = () => {
   const [originalUrl, setOriginalUrl] = useState("");
@@ -52,24 +51,24 @@ const App: React.FC = () => {
   useEffect(() => {
     setSubId(loadLocalSubId());
 
-    api
-      .get<{ data: HistoryItem[] }>("/api/convert/recent?limit=10")
-      .then((resp) => {
-        if (Array.isArray(resp.data?.data)) {
-          setHistory(resp.data.data);
-        }
-      })
-      .catch(() => {});
+    // api
+    //   .get<{ data: HistoryItem[] }>("/api/convert/recent?limit=10")
+    //   .then((resp) => {
+    //     if (Array.isArray(resp.data?.data)) {
+    //       setHistory(resp.data.data);
+    //     }
+    //   })
+    //   .catch(() => {});
 
-    api
-      .get<{ data: TopProduct[] }>("/api/top-products")
-      .then((resp) => {
-        if (Array.isArray(resp.data?.data) && resp.data.data.length > 0) {
-          setTopProducts(resp.data.data.slice(0, 8));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setProductsLoading(false));
+    // api
+    //   .get<{ data: TopProduct[] }>("/api/top-products")
+    //   .then((resp) => {
+    //     if (Array.isArray(resp.data?.data) && resp.data.data.length > 0) {
+    //       setTopProducts(resp.data.data.slice(0, 8));
+    //     }
+    //   })
+    //   .catch(() => {})
+    //   .finally(() => setProductsLoading(false));
   }, []);
 
   const canSubmit = useMemo(
@@ -161,8 +160,9 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50/80 text-stone-900 antialiased">
-      <DotPattern className="opacity-60" />
-      <GridPattern className="opacity-40" />
+      <Helmet>
+        <link rel="canonical" href="https://hoantien.shopbnh.vn/" />
+      </Helmet>
 
       <AppHeader subId={subId} onSubIdChange={setSubId} />
 

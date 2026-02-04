@@ -77,11 +77,11 @@ export function FeaturedProducts({ products, loading }: Props) {
                   </p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="font-semibold text-orange-600">
-                      {formatPrice(product.discount ?? product.price)}
+                      {formatPrice(product.discount ?? product.price ?? 0)}
                     </span>
                     {product.price && product.discount && (
                       <span className="text-xs text-stone-500 line-through">
-                        {formatPrice(product.price)}
+                        {formatPrice(product.price ?? 0)}
                       </span>
                     )}
                   </div>

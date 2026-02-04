@@ -99,32 +99,28 @@ async function performConvert(originalUrl, subId, req) {
     }
   }
 
-  // Luôn ưu tiên hiển thị thông tin sản phẩm nếu CSV có dữ liệu,
-  // phần hoa hồng (commission) sẽ được bổ sung nếu lấy được tỷ lệ.
-  const baseProductInfo =
-    productDetail && (productDetail.name || productDetail.price != null || productDetail.image)
-      ? {
-        productName: productDetail.name || undefined,
-        price: typeof productDetail.price === 'number' ? productDetail.price : undefined,
-        discount: typeof productDetail.discount === 'number' ? productDetail.discount : undefined,
-        image: productDetail.image || undefined
-      }
-      : null;
-
-  let estimatedCommission = null;
-  if (salePrice != null && typeof commissionRate === 'number' && commissionRate >= 0) {
-    estimatedCommission = Math.round((salePrice * commissionRate) / 100);
+  // Thông tin cơ bản từ CSV (hiển thị lên UI kể cả khi chưa tính được hoa hồng)
+  if (productDetail) {
+    productInfo = {
+      productName: productDetail.name,
+      price: productDetail.price,
+      discount: productDetail.discount,
+      image: productDetail.image
+    };
   }
 
-  if (baseProductInfo || (typeof commissionRate === 'number' && commissionRate >= 0)) {
+  // Bổ sung thông tin hoa hồng nếu tính được
+  if (salePrice != null && typeof commissionRate === 'number' && commissionRate >= 0) {
+    const estimatedCommission = Math.round((salePrice * commissionRate) / 100);
     productInfo = {
-      ...(baseProductInfo || {}),
-      ...(typeof commissionRate === 'number' && commissionRate >= 0
-        ? {
-          commissionRate,
-          estimatedCommission: estimatedCommission ?? undefined
-        }
-        : {})
+      ...(productInfo || {}),
+      commissionRate,
+      estimatedCommission
+    };
+  } else if (typeof commissionRate === 'number' && commissionRate >= 0) {
+    productInfo = {
+      ...(productInfo || {}),
+      commissionRate
     };
   }
 
@@ -223,4 +219,3 @@ router.get('/recent', async (req, res, next) => {
 });
 
 export default router;
-
