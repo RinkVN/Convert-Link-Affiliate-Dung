@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-background: oklch(0.98 0 0);
+  --color-foreground: oklch(0.145 0 0);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-primary: oklch(0.65 0.2 25);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.96 0.01 25);
+  --color-secondary-foreground: oklch(0.25 0.02 25);
+  --color-muted: oklch(0.96 0.01 25);
+  --color-muted-foreground: oklch(0.45 0.02 25);
+  --color-accent: oklch(0.96 0.02 25);
+  --color-accent-foreground: oklch(0.25 0.02 25);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-input: oklch(0.92 0.01 25);
+  --color-ring: oklch(0.65 0.2 25);
+  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+  --animate-aurora: aurora 60s linear infinite;
+}
+
+@keyframes scroll {
+  to {
+    transform: translate(calc(-50% - 0.5rem));
+  }
+}
+
+@keyframes aurora {
+  from {
+    background-position: 50% 50%, 50% 50%;
+  }
+
+  to {
+    background-position: 350% 50%, 350% 50%;
+  }
+}
