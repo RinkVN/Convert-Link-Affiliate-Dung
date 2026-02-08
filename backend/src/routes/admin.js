@@ -1,6 +1,9 @@
 import express from 'express';
 import { Link } from '../models/Link.js';
 import { Event } from '../models/Event.js';
+import { syncAllCoupons } from '../services/couponSync.js';
+import { setupIndex, syncCouponsToMeilisearch } from '../services/meilisearchService.js';
+
 const router = express.Router();
 
 function requireAdmin(req, res, next) {
@@ -111,6 +114,40 @@ router.get('/stats', async (req, res, next) => {
       conversionsOverTime: conversionsOverTime.map((x) => ({ date: x._id, count: x.count }))
     });
   } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/sync-coupons - Chạy đồng bộ coupon ngay (dùng cho lần đầu hoặc chạy thủ công)
+// Body/query: { domain, startPage } - startPage: tiếp tục từ trang N khi sync bị gián đoạn
+router.post('/sync-coupons', async (req, res, next) => {
+  try {
+    const domain = req.body?.domain || req.query?.domain || 'shopee.vn';
+    const startPage = req.body?.startPage ?? req.query?.startPage;
+    const results = await syncAllCoupons({ domain, startPage: startPage ? Number(startPage) : undefined });
+    res.json({
+      success: true,
+      message: 'Đồng bộ coupons hoàn tất',
+      results
+    });
+  } catch (err) {
+    console.error('Admin sync-coupons error:', err);
+    next(err);
+  }
+});
+
+// POST /api/admin/sync-meilisearch - Setup index + đồng bộ coupon sang Meilisearch
+router.post('/sync-meilisearch', async (req, res, next) => {
+  try {
+    await setupIndex();
+    const result = await syncCouponsToMeilisearch();
+    res.json({
+      success: true,
+      message: 'Meilisearch index setup và sync hoàn tất',
+      synced: result.index
+    });
+  } catch (err) {
+    console.error('Admin sync-meilisearch error:', err);
     next(err);
   }
 });

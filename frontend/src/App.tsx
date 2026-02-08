@@ -8,6 +8,7 @@ import { FloatingLogos } from "@/components/FloatingLogos";
 import { ConvertForm } from "@/components/ConvertForm";
 import { ResultCard } from "@/components/ResultCard";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
+import { CouponsList } from "@/components/CouponsList";
 import { AppFooter } from "@/components/AppFooter";
 import { ShopPromoBanner } from "@/components/ShopPromoBanner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -270,6 +271,9 @@ const App: React.FC = () => {
             />
           )}
         </section>
+
+        {/* Mã khuyến mại hiện có từ ACCESSTRADE */}
+        <CouponsList />
 
         {/* Sản phẩm nổi bật - phụ */}
         <FeaturedProducts products={topProducts} loading={productsLoading} />

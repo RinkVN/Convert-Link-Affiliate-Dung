@@ -60,7 +60,7 @@ export function ConvertForm({
           <Button
             type="submit"
             disabled={!canSubmit}
-            className="w-full bg-orange-500 hover:bg-orange-600 focus-visible:ring-orange-500"
+            className="w-full bg-orange-500 hover:bg-orange-600 focus-visible:ring-orange-500 text-lg"
           >
             {loading ? "Đang convert..." : "Chuyển đổi"}
           </Button>

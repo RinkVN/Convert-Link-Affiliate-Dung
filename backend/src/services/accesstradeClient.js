@@ -376,3 +376,103 @@ export async function getTopProducts({ dateFrom, dateTo, merchant } = {}) {
   }
 }
 
+/**
+ * Lấy danh sách mã khuyến mại (vouchers/coupons) từ ACCESSTRADE.
+ * Tài liệu: https://developers.accesstrade.vn/api-publisher-vietnamese/lay-thong-tin-vouchers-coupons-deals/tim-kiem-danh-sach-thong-tin-khuyen-mai
+ *
+ * GET /v1/offers_informations/coupon
+ */
+export async function getCoupons({ isNextDayCoupon, domain, limit, page } = {}) {
+  const apiToken = process.env.ACCESSTRADE_API_TOKEN?.trim();
+  const baseUrl = process.env.ACCESSTRADE_BASE_URL || DEFAULT_BASE_URL;
+
+  if (!apiToken) {
+    const err = new Error('ACCESSTRADE_API_TOKEN is not configured on the server');
+    err.status = 500;
+    throw err;
+  }
+
+  const params = new URLSearchParams();
+
+  // Mặc định: lấy khuyến mại đang diễn ra (False)
+  const isNextDay =
+    typeof isNextDayCoupon === 'boolean'
+      ? isNextDayCoupon
+      : typeof isNextDayCoupon === 'string'
+      ? isNextDayCoupon.toLowerCase() === 'true'
+      : false;
+
+  params.append('is_next_day_coupon', isNextDay ? 'True' : 'False');
+  params.append('domain', (domain || 'shopee.vn').trim());
+  params.append('limit', String(limit || 10));
+  params.append('page', String(page || 1));
+
+  const url = `${baseUrl}/v1/offers_informations/coupon?${params.toString()}`;
+  console.log("[ACCESSTRADE][coupons] URL:", url);
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${apiToken}`
+      },
+      timeout: 30000
+    });
+
+    const data = response.data;
+
+    let items = [];
+    let total = 0;
+    let countCurrentDay = null;
+    let countNextDay = null;
+
+    // ACCESSTRADE có 2 kiểu response:
+    // 1) { count, data: [ ... ] }
+    // 2) { data: { count, data: [ ... ] } }
+    if (Array.isArray(data?.data)) {
+      // Kiểu (1)
+      items = data.data;
+      total = data.count ?? items.length ?? 0;
+      countCurrentDay = data.count_current_day_coupon ?? null;
+      countNextDay = data.count_next_day_coupon ?? null;
+    } else {
+      // Kiểu (2) - fallback
+      const wrapper = data?.data || {};
+      items = wrapper.data || [];
+      total = wrapper.count ?? items.length ?? 0;
+      countCurrentDay = wrapper.count_current_day_coupon ?? null;
+      countNextDay = wrapper.count_next_day_coupon ?? null;
+    }
+
+    return {
+      items,
+      total,
+      countCurrentDay,
+      countNextDay,
+      raw: data
+    };
+  } catch (error) {
+    if (error.response) {
+      const status = error.response.status;
+      const rd = error.response.data;
+      let message =
+        rd?.message ||
+        rd?.error ||
+        (typeof rd === 'string' ? rd : null);
+      if (message && typeof message === 'object') {
+        message = JSON.stringify(message);
+      } else if (!message && rd && typeof rd === 'object') {
+        message = JSON.stringify(rd);
+      }
+      message = message || 'ACCESSTRADE offers_informations/coupon API error';
+      const err = new Error(`ACCESSTRADE coupons error (${status}): ${message}`);
+      err.status = status >= 500 ? 502 : status;
+      throw err;
+    }
+    if (error.code === 'ECONNABORTED') {
+      const err = new Error('ACCESSTRADE coupons request timed out');
+      err.status = 504;
+      throw err;
+    }
+    throw error;
+  }
+}

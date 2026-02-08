@@ -8,10 +8,13 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { connectDb } from './config/db.js';
 import { loadShopeeDatafeed } from './services/shopeeDatafeed.js';
+import { startCouponSyncCron } from './jobs/couponSync.js';
 import convertRouter, { renderLinkHandler } from './routes/convert.js';
 import tiktokshopRouter from './routes/tiktokshop.js';
 import lazadaRouter from './routes/lazada.js';
 import topProductsRouter from './routes/topProducts.js';
+import couponsRouter from './routes/coupons.js';
+import searchRouter from './routes/search.js';
 import eventsRouter from './routes/events.js';
 import adminRouter from './routes/admin.js';
 import redirectRouter from './routes/redirect.js';
@@ -59,6 +62,8 @@ app.use('/api/tiktokshop', convertLimiter, tiktokshopRouter);
 app.use('/api/lazada', convertLimiter, lazadaRouter);
 app.get('/render-link', convertLimiter, renderLinkHandler);
 app.use('/api/top-products', topProductsRouter);
+app.use('/api/coupons', couponsRouter);
+app.use('/api/search', searchRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/r', redirectRouter);
@@ -78,12 +83,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 4001;
+const PORT = process.env.PORT || 4000;
 
 async function start() {
   try {
     await connectDb();
     await loadShopeeDatafeed();
+    startCouponSyncCron();
     app.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
     });
