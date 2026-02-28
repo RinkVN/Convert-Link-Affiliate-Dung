@@ -3,7 +3,7 @@ import { syncAllCoupons } from '../services/couponSync.js';
 import { syncCouponsToMeilisearch } from '../services/meilisearchService.js';
 
 export function startCouponSyncCron() {
-  cron.schedule('0 */12 * * *', async () => {
+  cron.schedule('0 0 * * 0', async () => {
     console.log('[CRON] Bắt đầu đồng bộ coupons từ ACCESSTRADE...');
     try {
       const results = await syncAllCoupons({ domain: 'shopee.vn' });
@@ -24,5 +24,5 @@ export function startCouponSyncCron() {
       console.error('[CRON] Lỗi đồng bộ coupons:', err);
     }
   });
-  console.log('[CRON] Lịch đồng bộ coupons: mỗi 12 tiếng (0:00, 12:00)');
+  console.log('[CRON] Lịch đồng bộ coupons: mỗi tuần (Chủ nhật 0:00)');
 }
